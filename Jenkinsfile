@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKERHUB_CREDENTIALS ='DockerAuth'
+        DOCKERHUB_CREDENTIALS = credentials('DockerAuth')
         PATH = "C:/Program Files/gradle-8.7/bin;${env.PATH}"
         DOCKER_REGISTRY = 'sinemtasdemir/devops'
         DOCKER_IMAGE = ''
@@ -14,7 +14,7 @@ pipeline {
                 git branch: 'main', url: 'https://github.com/sinemtasdemir19/devops.git'
             }
         }
-        
+
         stage('Building the jar file') {
             steps {
                 echo 'Start building the jar'
@@ -31,7 +31,9 @@ pipeline {
 
         stage('Login to DockerHub') {
             steps {
-                bat 'echo %DOCKERHUB_CREDENTIALS_PSW% | docker login -u %DOCKERHUB_CREDENTIALS_USR% --password-stdin'
+                withCredentials([usernamePassword(credentialsId: 'DockerAuth', passwordVariable: 'DOCKERHUB_CREDENTIALS_PSW', usernameVariable: 'DOCKERHUB_CREDENTIALS_USR')]) {
+                    bat 'docker login -u %DOCKERHUB_CREDENTIALS_USR% --password %DOCKERHUB_CREDENTIALS_PSW%'
+                }
                 echo 'Logged in'
             }
         }
