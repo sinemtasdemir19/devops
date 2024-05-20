@@ -8,7 +8,7 @@ pipeline {
         stage('Pull the project from GitHub') {
             steps {
                 echo 'Getting the project from GitHub'
-                git 'https://github.com/sinemtasdemir19/devops.git'
+                git branch: 'main', url: 'https://github.com/sinemtasdemir19/devops.git'
             }
         }
         
