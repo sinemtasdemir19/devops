@@ -1,7 +1,10 @@
 pipeline {
     agent any
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('DockerAuth')
+        DOCKERHUB_CREDENTIALS ='DockerAuth'
+        PATH = "C:/Program Files/gradle-8.7/bin;${env.PATH}"
+        DOCKER_REGISTRY = 'sinemtasdemir/devops'
+        DOCKER_IMAGE = ''
     }
 
     stages {
