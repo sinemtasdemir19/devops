@@ -2,7 +2,6 @@ pipeline {
     agent any
     environment {
         DOCKERHUB_CREDENTIALS = credentials('DockerAuth')
-        PATH = "C:/Program Files/gradle-8.7/bin;${env.PATH}"
         DOCKER_REGISTRY = 'sinemtasdemir'
         DOCKER_IMAGE = 'app'
         IMAGE_TAG = 'latest'
@@ -26,14 +25,14 @@ pipeline {
         stage('Create the Docker image of the application') {
             steps {
                 echo 'Building the Docker image'
-                bat "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG} ."
+                powershell "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG} ."
             }
         }
 
         stage('Login to DockerHub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'DockerAuth', passwordVariable: 'DOCKERHUB_CREDENTIALS_PSW', usernameVariable: 'DOCKERHUB_CREDENTIALS_USR')]) {
-                    bat 'docker login -u %DOCKERHUB_CREDENTIALS_USR% --password %DOCKERHUB_CREDENTIALS_PSW%'
+                    powershell 'docker login -u $env:DOCKERHUB_CREDENTIALS_USR --password $env:DOCKERHUB_CREDENTIALS_PSW'
                 }
                 echo 'Logged in'
             }
@@ -41,7 +40,7 @@ pipeline {
 
         stage('Push the image to DockerHub') {
             steps {
-                bat "docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG}"
+                powershell "docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG}"
                 echo 'The image is pushed'
             }
         }
@@ -49,7 +48,7 @@ pipeline {
         stage('Pull the image from DockerHub') {
             steps {
                 echo 'Pulling the Docker image from DockerHub'
-                bat "docker pull ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG}"
+                powershell "docker pull ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG}"
             }
         }
 
@@ -57,7 +56,7 @@ pipeline {
             steps {
                 script {
                     echo 'Deploying to Minikube'
-                    sh '''
+                    powershell '''
                     kubectl apply -f src/deployment.yaml
                     kubectl apply -f src/service.yaml
                     '''
