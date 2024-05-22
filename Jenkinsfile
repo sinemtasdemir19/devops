@@ -1,38 +1,72 @@
 pipeline {
     agent any
-    tools {
-        maven 'maven_3_5_0'
+
+    environment {
+        DOCKER_REGISTRY = 'sinemtasdemir/devops'
+        DOCKER_CREDENTIALS = 'Jenkins'
+        DOCKER_IMAGE = ''
+        KUBECONFIG_CREDENTIALS_ID = 'kubeconfig'
     }
+
     stages {
-        stage('Build Maven') {
+        stage('Checkout') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: 'main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Java-Techie-jt/devops-automation']]])
-                sh 'mvn clean install'
+                git branch: 'main', url: 'https://github.com/sinemtasdemir/project3--devops'
             }
         }
-        stage('Build docker image') {
+
+        stage('Build JAR') {
             steps {
                 script {
-                    sh 'docker build -t sinemtasdemir/webapp:latest .'
+                    bat './gradlew clean bootJar'
                 }
             }
         }
-        stage('Push image to Hub') {
+
+        stage('Build Docker Image') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-pwd', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
-                        sh "docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}"
+                    DOCKER_IMAGE = docker.build("${DOCKER_REGISTRY}:latest")
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('', DOCKER_CREDENTIALS) {
+                        DOCKER_IMAGE.push()
                     }
-                    sh 'docker push sinemtasdemir/webapp:latest'
                 }
             }
         }
-        stage('Deploy to k8s') {
+
+        stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    kubernetesDeploy(configs: 'deploymentservice.yaml', kubeconfigId: 'k8sconfigpwd')
+                    withCredentials([string(credentialsId: KUBECONFIG_CREDENTIALS_ID, variable: 'KUBECONFIG_CONTENT_BASE64')]) {
+                        writeFile file: 'kubeconfig.base64', text: KUBECONFIG_CONTENT_BASE64
+                        bat '''
+                        if exist kubeconfig del kubeconfig
+                        certutil -decode kubeconfig.base64 kubeconfig
+                        kubectl --kubeconfig=kubeconfig apply -f deployment.yaml
+                        kubectl --kubeconfig=kubeconfig apply -f service.yaml
+                        '''
+                    }
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline finished successfully.'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
+        always {
+            echo 'Pipeline finished.'
         }
     }
 }

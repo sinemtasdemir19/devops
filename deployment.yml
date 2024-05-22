@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: springboot
+  name: devops-gradle-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: springboot
+      app: devops-gradle
   template:
     metadata:
       labels:
-        app: springboot
+        app: devops-gradle
     spec:
       containers:
-        - name: springboot
-          image: sinemtasdemir/app
+        - name: devops-gradle
+          image: sinemtasdemir/devops:latest
           ports:
             - containerPort: 8080
           env:
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgresql:5432/your_db_name
+              value: jdbc:postgresql://database:5432/swe304
             - name: SPRING_DATASOURCE_USERNAME
-              value: your_db_user
+              value: postgres
             - name: SPRING_DATASOURCE_PASSWORD
-              value: your_db_password
+              value: postgresql8563
