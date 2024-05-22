@@ -57,8 +57,8 @@ pipeline {
                 script {
                     echo 'Deploying to Minikube'
                     powershell '''
-                    kubectl apply -f src/deployment.yaml
-                    kubectl apply -f src/service.yaml
+                    kubectl apply -f deployment.yaml
+                    kubectl apply -f service.yaml
                     '''
                 }
             }
