@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springboot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: springboot
+  template:
+    metadata:
+      labels:
+        app: springboot
+    spec:
+      containers:
+        - name: springboot
+          image: sinemtasdemir/app
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgresql:5432/your_db_name
+            - name: SPRING_DATASOURCE_USERNAME
+              value: your_db_user
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: your_db_password

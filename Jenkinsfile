@@ -3,8 +3,9 @@ pipeline {
     environment {
         DOCKERHUB_CREDENTIALS = credentials('DockerAuth')
         PATH = "C:/Program Files/gradle-8.7/bin;${env.PATH}"
-        DOCKER_REGISTRY = 'sinemtasdemir/devops'
-        DOCKER_IMAGE = ''
+        DOCKER_REGISTRY = 'sinemtasdemir'
+        DOCKER_IMAGE = 'app'
+        IMAGE_TAG = 'latest'
     }
 
     stages {
@@ -25,7 +26,7 @@ pipeline {
         stage('Create the Docker image of the application') {
             steps {
                 echo 'Building the Docker image'
-                bat 'docker build -t sinemtasdemir/app .'
+                bat "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG} ."
             }
         }
 
@@ -40,8 +41,27 @@ pipeline {
 
         stage('Push the image to DockerHub') {
             steps {
-                bat 'docker push sinemtasdemir/app'
+                bat "docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG}"
                 echo 'The image is pushed'
+            }
+        }
+
+        stage('Pull the image from DockerHub') {
+            steps {
+                echo 'Pulling the Docker image from DockerHub'
+                bat "docker pull ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG}"
+            }
+        }
+
+        stage('Deploy to Minikube') {
+            steps {
+                script {
+                    echo 'Deploying to Minikube'
+                    sh '''
+                    kubectl apply -f src/deployment.yaml
+                    kubectl apply -f src/service.yaml
+                    '''
+                }
             }
         }
     }
