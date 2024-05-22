@@ -50,8 +50,8 @@ pipeline {
                         bat '''
                         if exist kubeconfig del kubeconfig
                         certutil -decode kubeconfig.base64 kubeconfig
-                        kubectl --kubeconfig=kubeconfig apply -f deployment.yaml
-                        kubectl --kubeconfig=kubeconfig apply -f service.yaml
+                        kubectl --kubeconfig=kubeconfig apply -f C:\\Users\\sinem\\.minikube\\deployment.yaml
+                        kubectl --kubeconfig=kubeconfig apply -f C:\\Users\\sinem\\.minikube\\service.yaml
                         '''
                     }
                 }
