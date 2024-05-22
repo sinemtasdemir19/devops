@@ -1,59 +1,36 @@
 pipeline {
     agent any
-    environment {
-        DOCKERHUB_CREDENTIALS = credentials('DockerAuth')
-        DOCKER_REGISTRY = 'sinemtasdemir'
-        DOCKER_IMAGE = 'app'
-        IMAGE_TAG = 'latest'
+    tools {
+        maven 'maven_3_5_0'
     }
     stages {
-        stage('Pull the project from GitHub') {
+        stage('Build Maven') {
             steps {
-                echo 'Getting the project from GitHub'
-                git branch: 'main', url: 'https://github.com/sinemtasdemir19/devops.git'
+                checkout([$class: 'GitSCM', branches: [[name: 'main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Java-Techie-jt/devops-automation']]])
+                sh 'mvn clean install'
             }
         }
-        stage('Building the jar file') {
-            steps {
-                echo 'Start building the jar'
-                bat './gradlew.bat clean bootJar' // Ensure gradlew.bat is executable
-            }
-        }
-        stage('Create the Docker image of the application') {
-            steps {
-                echo 'Building the Docker image'
-                powershell "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG} ."
-            }
-        }
-        stage('Login to DockerHub') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'DockerAuth', passwordVariable: 'DOCKERHUB_CREDENTIALS_PSW', usernameVariable: 'DOCKERHUB_CREDENTIALS_USR')]) {
-                    powershell 'docker login -u $env:DOCKERHUB_CREDENTIALS_USR --password $env:DOCKERHUB_CREDENTIALS_PSW'
-                }
-                echo 'Logged in'
-            }
-        }
-        stage('Push the image to DockerHub') {
-            steps {
-                powershell "docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG}"
-                echo 'The image is pushed'
-            }
-        }
-        stage('Pull the image from DockerHub') {
-            steps {
-                echo 'Pulling the Docker image from DockerHub'
-                powershell "docker pull ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${IMAGE_TAG}"
-            }
-        }
-        stage('Deploy to Minikube') {
+        stage('Build docker image') {
             steps {
                 script {
-                    echo 'Deploying to Minikube'
-                    // Apply Kubernetes manifests for deployment and service
-                    powershell '''
-                    kubectl apply -f src/deployment.yaml
-                    kubectl apply -f src/service.yaml
-                    '''
+                    sh 'docker build -t sinemtasdemir/webapp:latest .'
+                }
+            }
+        }
+        stage('Push image to Hub') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-pwd', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        sh "docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}"
+                    }
+                    sh 'docker push sinemtasdemir/webapp:latest'
+                }
+            }
+        }
+        stage('Deploy to k8s') {
+            steps {
+                script {
+                    kubernetesDeploy(configs: 'deploymentservice.yaml', kubeconfigId: 'k8sconfigpwd')
                 }
             }
         }
