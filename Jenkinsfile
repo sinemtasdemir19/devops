@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_REGISTRY = 'sinemtasdemir/devops'
-        DOCKER_CREDENTIALS = 'Jenkins'
+        DOCKER_REGISTRY = 'sinemtasdemir/webapp'
+        DOCKER_CREDENTIALS = 'DockerAuth'
         DOCKER_IMAGE = ''
-        KUBECONFIG_CREDENTIALS_ID = 'kubeconfig'
+        KUBECONFIG_CREDENTIALS_ID = 'kubeconfig'  // Güncellenmiş ID
     }
 
     stages {
@@ -26,7 +26,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    DOCKER_IMAGE = docker.build("${DOCKER_REGISTRY}:latest")
+                    bat 'docker build -t sinemtasdemir/webapp:latest .'
                 }
             }
         }
@@ -34,8 +34,9 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('', DOCKER_CREDENTIALS) {
-                        DOCKER_IMAGE.push()
+                    withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS, passwordVariable: 'DOCKERHUB_PASSWORD', usernameVariable: 'DOCKERHUB_USERNAME')]) {
+                        bat "docker login -u %DOCKERHUB_USERNAME% -p %DOCKERHUB_PASSWORD%"
+                        bat "docker push sinemtasdemir/webapp:latest"
                     }
                 }
             }
