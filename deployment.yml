@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: devops-gradle
-          image: sinemtasdemir/devops:latest
+          image: sinem/devops:latest
           ports:
             - containerPort: 8080
           env:
@@ -23,4 +23,4 @@ spec:
             - name: SPRING_DATASOURCE_USERNAME
               value: postgres
             - name: SPRING_DATASOURCE_PASSWORD
-              value: postgresql8563
+              value: password
